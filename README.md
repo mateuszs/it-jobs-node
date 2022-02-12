@@ -6,32 +6,19 @@ Prosta aplikacja dydaktyczna Express Node.js API.
 
 Zainstaluj [Docker Desktop](https://www.docker.com/get-started).
 
-Sklonuj repozytorium GIT:
+Pobierz kontener z aplikacją
 
 ```bash
-git clone https://github.com/mateuszs/it-jobs-node.git
-```
-
-wejdź do folderu z aplikacją i pobierz kontener
-
-```bash
-cd join-it-api
-docker-compose pull
+docker pull mateuszscirka/it-jobs-api:latest
 ```
 
 a następnie uruchom
 
 ```bash
-docker-compose up
+docker run -p 4000:4000 -v it-jobs-api-db:/api/src/database mateuszscirka/it-jobs-api:latest
 ```
 
-Serwer powinien zostać uruchomiony i dostępny pod adresem `http://localhost:4000`
-
-Aby wyłączyć serwer
-
-```bash
-docker-compose down
-```
+Serwer powinien zostać uruchomiony i dostępny pod adresem `http://localhost:4000`. Serwer mozna wyłączyć za pomocą CTRL+C
 
 ## Dostępne zasoby API
 
