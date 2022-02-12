@@ -37,7 +37,7 @@ docker-compose down
 
 GET: /offers
 
-Query params (all optional):
+Query params (opcjonalne):
 
 ```
 limit: number
@@ -48,7 +48,7 @@ orderBy: string (offer field)
 direction: asc | desc
 ```
 
-eg: `localhost:4000/offers?page=1&limit=10&orderBy=id&direction=desc`
+np: `localhost:4000/offers?page=1&limit=10&orderBy=id&direction=desc`
 
 GET: /offers/:id
 
