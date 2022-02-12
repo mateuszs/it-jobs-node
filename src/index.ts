@@ -69,5 +69,7 @@ app.post('/offers', async (req, res) => {
 })
 
 app.listen(port, () =>
-    console.log(`Serwer Join IT Api pracuje na porcie: ${port}`)
+    console.log(
+        `IT jobs API\nAutor: Mateusz Ścirka\nOpis API w README.md\n\nSerwer Join IT Api pracuje na porcie: ${port}`
+    )
 )

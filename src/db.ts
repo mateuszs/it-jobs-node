@@ -8,8 +8,6 @@ const connectedKnex = knex({
     useNullAsDefault: true
 })
 
-connectedKnex.raw('PRAGMA foreign_keys = ON;').then(() => {
-    console.log('Baza danych aktywna.')
-})
+connectedKnex.raw('PRAGMA foreign_keys = ON;').then()
 
 export default connectedKnex
