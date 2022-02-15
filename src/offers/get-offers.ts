@@ -1,8 +1,15 @@
 import db from './../db'
 
-export interface GetOffersQueryParams {
+export interface GetOffersParams {
     offerId?: string
     categoryId?: string
+    filters?: {
+        seniorityId?: string
+        salaryFrom?: string
+        salaryTo?: string
+        contractTypeId?: string
+        benefitIds?: string[]
+    }
     page?: number
     limit?: number
     sort?: {
@@ -12,42 +19,105 @@ export interface GetOffersQueryParams {
     search?: string
 }
 
-export interface GetOffersByCategoryQueryParams {
-    categoryId: string
-    sort?: {
-        orderBy: string
-        direction: string
-    }
-    limit?: number
+interface GetOffersRequestQueryParams {
+    category?: string
+    seniority?: string
+    salary_from?: string
+    salary_to?: string
+    contract_type?: string
+    benefits?: string
+    page?: string
+    limit?: string
+    order_by?: string
+    sort_direction?: string
+    search?: string
+    offerId?: string
 }
 
-export async function getOffers({
-    page,
-    limit,
-    sort,
-    search,
-    categoryId,
-    offerId
-}: GetOffersQueryParams) {
-    const sortBy = sort?.orderBy ?? 'id'
-    const sortDirection = sort?.direction ?? 'desc'
-    search = search ? `%${search?.toLowerCase()}%` : undefined
-    page = page ?? 1
+export function mapGetOffersQueryParams(
+    query: GetOffersRequestQueryParams
+): GetOffersParams {
+    return {
+        offerId: query.offerId,
+        categoryId: query.category,
+        filters: {
+            seniorityId: query.seniority,
+            salaryFrom: query.salary_from,
+            salaryTo: query.salary_to,
+            contractTypeId: query.contract_type,
+            benefitIds: query.benefits?.split(',') ?? []
+        },
+        page: Number(query.page ?? '1'),
+        limit: Number(query.limit ?? '2'),
+        sort: {
+            direction: query.sort_direction ?? 'desc',
+            orderBy: query.order_by ?? 'id'
+        },
+        search: query.search ? `%${query.search?.toLowerCase()}%` : undefined
+    }
+}
 
-    const totalCountQuery = db.select(1).from('offers').count('id')
-    const query = db.select('*').from('offers')
+export async function getOffers(params: GetOffersRequestQueryParams) {
+    const { page, limit, sort, search, categoryId, filters, offerId } =
+        mapGetOffersQueryParams(params)
+
+    const query = db
+        .select('offers.*', 'seniorities.name as seniority_name')
+        .from('offers')
+        .join('seniorities', 'seniorities.id', 'offers.id_seniority')
 
     if (offerId) {
-        query.where('id', '=', offerId)
+        query.where('offers.id', '=', offerId)
     }
 
     if (categoryId) {
         query.whereIn(
-            'id',
+            'offers.id',
             db
                 .select('id_offer')
                 .from('offer_category')
                 .where('id_category', '=', categoryId)
+        )
+    }
+
+    if (filters?.benefitIds?.length) {
+        query.whereIn(
+            'offers.id',
+            db
+                .select('id_offer')
+                .from('offer_benefit')
+                .whereIn('id_benefit', filters.benefitIds)
+        )
+    }
+
+    if (filters?.seniorityId) {
+        query.whereIn(
+            'offers.id',
+            db
+                .select('id_offer')
+                .from('offer_seniority')
+                .where('id_seniority', '=', filters.seniorityId)
+        )
+    }
+
+    if (filters?.contractTypeId) {
+        query.whereIn(
+            'offers.id',
+            db
+                .select('id_offer')
+                .from('offer_contract-type')
+                .where('id_contract-type', '=', filters.contractTypeId)
+        )
+    }
+
+    if (filters?.salaryFrom && filters.salaryTo) {
+        query.whereIn(
+            'offers.id',
+            db
+                .select('id_offer')
+                .from('offer_contract-type')
+                .where('salary_from', '>=', filters.salaryFrom)
+                .andWhere('salary_to', '<=', filters.salaryTo)
         )
     }
 
@@ -58,19 +128,60 @@ export async function getOffers({
             .orWhereRaw('LOWER(company_city) LIKE ?', [search ?? '%'])
     }
 
-    query.orderBy(sortBy, sortDirection)
+    if (sort) {
+        query.orderBy(sort?.orderBy, sort?.direction)
+    }
 
     if (limit) {
         query.limit(limit)
-        query.offset((page - 1) * limit)
+
+        if (page) {
+            query.offset((page - 1) * limit)
+        }
     }
 
     const results = await query
-    const [totalCountQueryResult] = await totalCountQuery
-    const [, totalCount] = Object.values(totalCountQueryResult)
+
+    const promises = results.map(async ({ id, ...rest }) => {
+        const salary = await db
+            .select(
+                'contract-types.name',
+                'offer_contract-type.salary_from',
+                'offer_contract-type.salary_to'
+            )
+            .from('offer_contract-type')
+            .join(
+                'contract-types',
+                'contract-types.id',
+                'offer_contract-type.id_contract-type'
+            )
+            .where('id_offer', '=', id)
+
+        const categories = await db
+            .select('categories.*')
+            .from('offer_category')
+            .join('categories', 'categories.id', 'offer_category.id_category')
+            .where('offer_category.id_offer', '=', id)
+
+        const benefits = await db
+            .select('benefits.*')
+            .from('offer_benefit')
+            .join('benefits', 'benefits.id', 'offer_benefit.id_benefit')
+            .where('offer_benefit.id_offer', '=', id)
+
+        return {
+            id,
+            benefits,
+            salary,
+            categories,
+            ...rest
+        }
+    })
+
+    const offers = await Promise.all(promises)
 
     return {
-        records: results,
-        total_count: totalCount
+        records: offers,
+        total_count: 100
     }
 }

@@ -27,19 +27,25 @@ GET: /offers
 Query params (opcjonalne):
 
 ```
-limit: number
-page: number
-category_id: number
-search: string
-orderBy: string (offer field)
-direction: asc | desc
+    category?: string
+    seniority?: string
+    salary_from?: string
+    salary_to?: string
+    contract_type?: string
+    benefits?: string
+    page?: string
+    limit?: string
+    order_by?: string
+    sort_direction?: string
+    search?: string
+    offerId?: string
 ```
 
 np: `localhost:4000/offers?page=1&limit=10&orderBy=id&direction=desc`
 
 GET: /offers/:id
 
-GET: /categories
+GET: /config
 
 DELETE: /offers/:id
 
@@ -49,16 +55,20 @@ Request body:
 
 ```
 {
-	"title": "string",
-	"company_city": "string",
-	"category_ids": [number],
-	"salary_from": "number",
-	"salary_to": "number",
-	"duration": "number",
-	"company_name": "string",
-	"thumb": "base64 string",
-	"required_experience": "string",
-	"description": "string"
+    title: string
+    duration: number
+    description: string
+    thumb: string
+    company_name: string
+    company_city: string
+    seniority_id: string
+    category_ids: string[]
+    benefit_ids: string[]
+    contracts: {
+        salary_from: string
+        salary_to: string
+        contract_type_id: string
+    }[]
 }
 ```
 
