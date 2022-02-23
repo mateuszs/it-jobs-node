@@ -142,41 +142,51 @@ export async function getOffers(params: GetOffersRequestQueryParams) {
 
     const results = await query
 
-    const promises = results.map(async ({ id, ...rest }) => {
-        const salary = await db
-            .select(
-                'contract-types.name',
-                'offer_contract-type.salary_from',
-                'offer_contract-type.salary_to'
-            )
-            .from('offer_contract-type')
-            .join(
-                'contract-types',
-                'contract-types.id',
-                'offer_contract-type.id_contract-type'
-            )
-            .where('id_offer', '=', id)
+    const promises = results.map(
+        async ({ id, id_seniority, seniority_name, ...rest }) => {
+            const salary = await db
+                .select(
+                    'contract-types.name',
+                    'offer_contract-type.salary_from',
+                    'offer_contract-type.salary_to'
+                )
+                .from('offer_contract-type')
+                .join(
+                    'contract-types',
+                    'contract-types.id',
+                    'offer_contract-type.id_contract-type'
+                )
+                .where('id_offer', '=', id)
 
-        const categories = await db
-            .select('categories.*')
-            .from('offer_category')
-            .join('categories', 'categories.id', 'offer_category.id_category')
-            .where('offer_category.id_offer', '=', id)
+            const categories = await db
+                .select('categories.*')
+                .from('offer_category')
+                .join(
+                    'categories',
+                    'categories.id',
+                    'offer_category.id_category'
+                )
+                .where('offer_category.id_offer', '=', id)
 
-        const benefits = await db
-            .select('benefits.*')
-            .from('offer_benefit')
-            .join('benefits', 'benefits.id', 'offer_benefit.id_benefit')
-            .where('offer_benefit.id_offer', '=', id)
+            const benefits = await db
+                .select('benefits.*')
+                .from('offer_benefit')
+                .join('benefits', 'benefits.id', 'offer_benefit.id_benefit')
+                .where('offer_benefit.id_offer', '=', id)
 
-        return {
-            id,
-            benefits,
-            salary,
-            categories,
-            ...rest
+            return {
+                id,
+                benefits,
+                salary,
+                categories,
+                seniority: {
+                    id: id_seniority,
+                    name: seniority_name
+                },
+                ...rest
+            }
         }
-    })
+    )
 
     const offers = await Promise.all(promises)
 

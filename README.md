@@ -41,7 +41,7 @@ Query params (opcjonalne):
     offerId?: string
 ```
 
-np: `localhost:4000/offers?page=1&limit=10&orderBy=id&direction=desc`
+np: `localhost:4000/offers?page=1&limit=10&order_by=id&sort_direction=desc`
 
 GET: /offers/:id
 
