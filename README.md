@@ -1,4 +1,4 @@
-# IT Jobs API
+## IT Jobs API
 
 Prosta aplikacja dydaktyczna Express Node.js API.
 
