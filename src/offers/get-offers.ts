@@ -91,13 +91,7 @@ export async function getOffers(params: GetOffersRequestQueryParams) {
     }
 
     if (filters?.seniorityId) {
-        query.whereIn(
-            'offers.id',
-            db
-                .select('id_offer')
-                .from('offer_seniority')
-                .where('id_seniority', '=', filters.seniorityId)
-        )
+        query.where('id_seniority', '=', filters.seniorityId)
     }
 
     if (filters?.contractTypeId) {
