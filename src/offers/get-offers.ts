@@ -2,7 +2,7 @@ import db from './../db'
 
 export interface GetOffersParams {
     offerId?: string
-    categoryId?: string
+    categoryIds?: string[]
     filters?: {
         seniorityId?: string
         salaryFrom?: string
@@ -25,7 +25,7 @@ interface GetOffersRequestQueryParams {
     salary_from?: string
     salary_to?: string
     contract_type?: string
-    benefits?: string
+    benefit?: string
     page?: string
     limit?: string
     order_by?: string
@@ -34,18 +34,26 @@ interface GetOffersRequestQueryParams {
     offerId?: string
 }
 
+const toArray = (value: string | string[]) => {
+    if (Array.isArray(value)) {
+        return value
+    }
+
+    return [value].filter(Boolean)
+}
+
 export function mapGetOffersQueryParams(
     query: GetOffersRequestQueryParams
 ): GetOffersParams {
     return {
         offerId: query.offerId,
-        categoryId: query.category,
+        categoryIds: toArray(query.category as string),
         filters: {
             seniorityId: query.seniority,
             salaryFrom: query.salary_from,
             salaryTo: query.salary_to,
             contractTypeId: query.contract_type,
-            benefitIds: query.benefits?.split(',') ?? []
+            benefitIds: toArray(query.benefit as string)
         },
         page: Number(query.page ?? '1'),
         limit: Number(query.limit ?? '2'),
@@ -58,7 +66,7 @@ export function mapGetOffersQueryParams(
 }
 
 export async function getOffers(params: GetOffersRequestQueryParams) {
-    const { page, limit, sort, search, categoryId, filters, offerId } =
+    const { page, limit, sort, search, categoryIds, filters, offerId } =
         mapGetOffersQueryParams(params)
 
     const query = db
@@ -70,13 +78,13 @@ export async function getOffers(params: GetOffersRequestQueryParams) {
         query.where('offers.id', '=', offerId)
     }
 
-    if (categoryId) {
+    if (categoryIds?.length) {
         query.whereIn(
             'offers.id',
             db
                 .select('id_offer')
                 .from('offer_category')
-                .where('id_category', '=', categoryId)
+                .whereIn('id_category', categoryIds)
         )
     }
 
